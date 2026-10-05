@@ -26,7 +26,11 @@ SELECT CURRENT_ROLE(), CURRENT_SECONDARY_ROLES();
 -- -----------------------------------------------------------------------------
 
 -- Expected: 15 rows (1 warehouse, 1 database, 4 on RAW, 3 on each other schema).
-SHOW GRANTS TO ROLE TRANSFORMER;
+-- SHOW GRANTS also lists one OWNERSHIP row per object the role has created:
+-- the pipe operator (->>) hands the result to a SELECT that leaves them out,
+-- so the count stays 15 once the tables and views exist.
+SHOW GRANTS TO ROLE TRANSFORMER
+    ->> SELECT * FROM $1 WHERE "privilege" <> 'OWNERSHIP';
 
 -- Expected: 2 rows, the role SYSADMIN and the user AIRFLOW_SVC.
 SHOW GRANTS OF ROLE TRANSFORMER;
