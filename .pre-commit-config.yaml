@@ -1,0 +1,34 @@
+# Local safety net run before each commit. Activate once per clone: pre-commit install
+default_install_hook_types: [pre-commit, commit-msg]
+default_stages: [pre-commit]
+
+repos:
+  # Block secrets (private keys, tokens) before they reach this public repository
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+
+  # Keep downloaded data files (60 MB Parquet) out of Git
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        args: [--maxkb=2000]
+
+  # Enforce Conventional Commits on commit messages
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v4.4.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+
+  # Lint and format Python (ingestion script, DAGs)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.10
+    hooks:
+      - id: ruff-check
+      - id: ruff-format
+
+# No SQL formatter and no whitespace fixer, on purpose: the SQL files provided
+# with the brief (airflow/include/sql/) must stay untouched.
