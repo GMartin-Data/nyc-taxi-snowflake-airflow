@@ -7,6 +7,8 @@ rsa_key*
 # Python
 .venv/
 __pycache__/
+.pytest_cache/
+.ruff_cache/
 
 # Airflow / Astro
 logs/
