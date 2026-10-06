@@ -87,3 +87,7 @@ GRANT ROLE TRANSFORMER TO USER AIRFLOW_SVC;
 -- to TIMESTAMP_NTZ through it; the Snowflake default is America/Los_Angeles,
 -- which _loaded_at would then carry without saying so.
 ALTER USER AIRFLOW_SVC SET TIMEZONE = 'UTC';
+
+-- Check: the TIMEZONE row must show value UTC at level USER, not the account
+-- default. This is the single setting that every client of the user inherits.
+SHOW PARAMETERS LIKE 'TIMEZONE' IN USER AIRFLOW_SVC;
