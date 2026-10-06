@@ -2,7 +2,8 @@
 -- 01_infrastructure.sql - NYC Taxi warehouse: role, compute, database, grants
 --
 -- Run in Snowsight with "Run All", signed in as an account administrator.
--- Replayable: every CREATE uses IF NOT EXISTS and every GRANT is idempotent.
+-- Replayable: every CREATE uses IF NOT EXISTS, every GRANT and ALTER is
+-- idempotent.
 -- The order follows the dependencies:
 --   role -> warehouse -> database -> schemas -> grants -> service user
 -- =============================================================================
@@ -81,3 +82,8 @@ CREATE USER IF NOT EXISTS AIRFLOW_SVC
 
 -- DEFAULT_ROLE only selects the role activated at login: this GRANT gives it.
 GRANT ROLE TRANSFORMER TO USER AIRFLOW_SVC;
+
+-- Session time zone of the tools. COPY INTO converts METADATA$START_SCAN_TIME
+-- to TIMESTAMP_NTZ through it; the Snowflake default is America/Los_Angeles,
+-- which _loaded_at would then carry without saying so.
+ALTER USER AIRFLOW_SVC SET TIMEZONE = 'UTC';
