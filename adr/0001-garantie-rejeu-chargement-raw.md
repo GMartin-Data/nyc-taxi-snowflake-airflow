@@ -1,6 +1,6 @@
 # ADR-0001 : Garantie de rejeu du chargement RAW
 
-Status: Proposed
+Status: Accepted
 Date: 2026-10-06
 
 ## Contexte
