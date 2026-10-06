@@ -60,15 +60,33 @@ def put(conn: SnowflakeConnection, file: Path) -> str:
     return status
 
 
+def is_loaded(conn: SnowflakeConnection, table: str, file_name: str) -> bool:
+    """Tell whether a table already carries rows of a file, by _source_file.
+
+    The file name travels as a bound variable, outside the SQL text.
+    """
+    with conn.cursor() as cur:
+        row = cur.execute(
+            f"SELECT COUNT(*) > 0 FROM {table} WHERE _source_file = %s", (file_name,)
+        ).fetchone()
+    return bool(row[0])
+
+
 def copy_into(
     conn: SnowflakeConnection, table: str, file_name: str, file_format: str
 ) -> int:
     """Copy one staged file into a table, matching columns by name.
 
+    Guarded: a file whose name the table already carries in _source_file is
+    not copied, whatever Snowflake's own load history (kept 64 days) says.
+    See adr/0001.
+
     Returns:
-        The number of rows loaded: 0 when Snowflake skipped the file because
-        the table already holds it.
+        The number of rows loaded: 0 when the guard or Snowflake skipped the file.
     """
+    if is_loaded(conn, table, file_name):
+        log.info("copy_skipped", table=table, file=file_name, reason="already loaded")
+        return 0
     with conn.cursor() as cur:
         cur.execute(
             f"""
