@@ -101,12 +101,13 @@ ORDER BY 1, 2;
 -- Expected: 1 row, 3475226 then TRUE in the four *_ok columns.
 -- A file staged in a folder would not match the filter: _source_file must be
 -- the file name alone. Amounts rounded to integers would give 0 decimal rows.
+-- ZEROIFNULL: on an empty table COUNT_IF returns NULL, not 0.
 SELECT
     COUNT(*) AS row_count,
     COUNT(*) = 3475226 AS row_count_ok,
     COUNT(_loaded_at) = 3475226 AS loaded_at_ok,
-    COUNT_IF(fare_amount <> ROUND(fare_amount)) = 3069449 AS fare_decimals_ok,
-    COUNT_IF(total_amount <> ROUND(total_amount)) = 3312453 AS total_decimals_ok
+    ZEROIFNULL(COUNT_IF(fare_amount <> ROUND(fare_amount))) = 3069449 AS fare_decimals_ok,
+    ZEROIFNULL(COUNT_IF(total_amount <> ROUND(total_amount))) = 3312453 AS total_decimals_ok
 FROM NYC_TAXI.RAW.YELLOW_TRIPDATA
 WHERE _source_file = 'yellow_tripdata_2025-01.parquet';
 
@@ -144,6 +145,6 @@ SELECT
     COUNT(DISTINCT locationid) = 265 AS locationid_unique_ok,
     COUNT(borough) = 265 AND COUNT(zone) = 265 AND COUNT(service_zone) = 265
         AS text_columns_ok,
-    COUNT_IF(_source_file = 'taxi_zone_lookup.csv') = 265
+    ZEROIFNULL(COUNT_IF(_source_file = 'taxi_zone_lookup.csv')) = 265
         AND COUNT(_loaded_at) = 265 AS technical_columns_ok
 FROM NYC_TAXI.RAW.TAXI_ZONE_LOOKUP;
