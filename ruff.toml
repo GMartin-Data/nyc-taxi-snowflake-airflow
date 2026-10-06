@@ -1,0 +1,4 @@
+[lint.isort]
+# Modules of ingestion/ are first-party; declared by name because ruff only
+# detects them from the filesystem once their files exist
+known-first-party = ["load_month", "load_zones", "snowflake_loader"]

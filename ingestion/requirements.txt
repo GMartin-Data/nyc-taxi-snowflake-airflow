@@ -1,0 +1,4 @@
+requests==2.34.2
+snowflake-connector-python==4.8.0
+cryptography==50.0.2
+structlog==26.1.0
