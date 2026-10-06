@@ -16,7 +16,8 @@ logs/
 airflow_settings.yaml
 
 
-# Fichiers téléchargés
+# Fichiers téléchargés (data/ est un cache local, y compris les .part interrompus)
+data/
 *.parquet
 taxi_zone_lookup.csv
 .DS_Store
