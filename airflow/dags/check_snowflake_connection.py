@@ -8,18 +8,18 @@ clear message, rather than in the middle of a load.
 
 from __future__ import annotations
 
-import logging
-
 import pendulum
+import structlog
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.sdk import dag, task
 
 CONN_ID = "snowflake_nyc_taxi"
 EXPECTED = ("AIRFLOW_SVC", "TRANSFORMER", "NYC_TAXI_WH")
 
-# Airflow's task log is built on the standard logging module: anything logged
-# here lands in the task's log in the UI
-log = logging.getLogger(__name__)
+# Airflow 3 writes the task log with structlog: the task runner configures it
+# before the task starts, so anything logged here lands in the task's log in
+# the UI, formatted like the lines of include/
+log = structlog.get_logger()
 
 
 @dag(
@@ -51,7 +51,8 @@ def check_snowflake_connection() -> None:
         identity = SnowflakeHook(snowflake_conn_id=CONN_ID).get_first(
             "SELECT CURRENT_USER(), CURRENT_ROLE(), CURRENT_WAREHOUSE()"
         )
-        log.info("connected: user=%s role=%s warehouse=%s", *identity)
+        user, role, warehouse = identity
+        log.info("connected", user=user, role=role, warehouse=warehouse)
         if tuple(identity) != EXPECTED:
             raise ValueError(
                 f"unexpected session identity {identity}, expected {EXPECTED}"

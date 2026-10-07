@@ -12,11 +12,11 @@ in the table is skipped, the run succeeds with zero rows loaded.
 
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 
 import pendulum
 import requests
+import structlog
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
 from airflow.sdk import dag, get_current_context, task
 
@@ -29,7 +29,8 @@ FILE_FORMAT = "NYC_TAXI.RAW.PARQUET_FF"
 # the download and the PUT
 DOWNLOAD_DIR = Path("/tmp")
 
-log = logging.getLogger(__name__)
+# Same logger as include/: Airflow 3 writes the task log with structlog
+log = structlog.get_logger()
 
 
 @dag(
@@ -88,7 +89,7 @@ def load_yellow_tripdata() -> None:
         """Copy the staged file into the RAW table, unless it is already there."""
         with SnowflakeHook(snowflake_conn_id=CONN_ID).get_conn() as conn:
             rows_loaded = snowflake_loader.copy_into(conn, TABLE, name, FILE_FORMAT)
-        log.info("month loaded: file=%s rows_loaded=%s", name, rows_loaded)
+        log.info("month_loaded", file=name, rows_loaded=rows_loaded)
         return rows_loaded
 
     # Each call passes the previous task's return value (a small string, via
