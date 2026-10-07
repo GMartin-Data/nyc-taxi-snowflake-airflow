@@ -1,7 +1,7 @@
 """Load one month of yellow taxi trips into NYC_TAXI.RAW.YELLOW_TRIPDATA.
 
 Usage:
-    uv run --env-file .env python ingestion/load_month.py 2025-01
+    uv run --env-file .env python airflow/include/load_month.py 2025-01
 
 Downloads the TLC file unless data/ already holds it, uploads it to the stage
 and copies it into the table. Replayable: a month already loaded adds no row.
@@ -21,7 +21,7 @@ from snowflake_loader import connect, copy_into, put
 TABLE = "NYC_TAXI.RAW.YELLOW_TRIPDATA"
 FILE_FORMAT = "NYC_TAXI.RAW.PARQUET_FF"
 BASE_URL = "https://d37ci6vzurychx.cloudfront.net/trip-data"
-DATA_DIR = Path(__file__).resolve().parents[1] / "data"
+DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 
 MONTH_PATTERN = re.compile(r"\d{4}-(0[1-9]|1[0-2])")
 

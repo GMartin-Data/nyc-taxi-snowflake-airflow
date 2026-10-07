@@ -1,7 +1,7 @@
 """Check that the service user can sign in to Snowflake with its key pair.
 
 Usage:
-    SNOWFLAKE_ACCOUNT=ORGANISATION-ACCOUNT python ingestion/check_connection.py
+    SNOWFLAKE_ACCOUNT=ORGANISATION-ACCOUNT python airflow/include/check_connection.py
 
 Exits with an error unless the session reports the expected user, role and
 warehouse.

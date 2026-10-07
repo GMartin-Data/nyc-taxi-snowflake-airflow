@@ -1,7 +1,7 @@
 """Load the TLC taxi zone lookup into NYC_TAXI.RAW.TAXI_ZONE_LOOKUP.
 
 Usage:
-    uv run --env-file .env python ingestion/load_zones.py
+    uv run --env-file .env python airflow/include/load_zones.py
 
 Downloads the CSV unless data/ already holds it, uploads it to the stage and
 copies it into the table. Replayable: a second run adds no row.
