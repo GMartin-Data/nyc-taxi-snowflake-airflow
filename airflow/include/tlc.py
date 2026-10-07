@@ -41,18 +41,25 @@ def download(url: str, destination: Path) -> Path:
     """Download a file by chunks, unless it is already on disk.
 
     The file is written under a temporary name and renamed at the end, so an
-    interrupted download never leaves a truncated file in place.
+    interrupted download never leaves a truncated file in place, nor the
+    temporary file behind: the error propagates after the cleanup.
     """
     if destination.exists():
         log.info("download_skipped", file=destination.name, reason="already on disk")
         return destination
     destination.parent.mkdir(parents=True, exist_ok=True)
     partial = destination.with_suffix(destination.suffix + ".part")
-    with requests.get(url, stream=True, timeout=120) as response:
-        response.raise_for_status()
-        with partial.open("wb") as f:
-            for chunk in response.iter_content(chunk_size=8 * 1024 * 1024):
-                f.write(chunk)
+    try:
+        with requests.get(url, stream=True, timeout=120) as response:
+            response.raise_for_status()
+            with partial.open("wb") as f:
+                for chunk in response.iter_content(chunk_size=8 * 1024 * 1024):
+                    f.write(chunk)
+    except BaseException:
+        # BaseException, not Exception: a task killed by Airflow (SIGTERM) or
+        # a Ctrl-C on the workstation must not leave the partial file either
+        partial.unlink(missing_ok=True)
+        raise
     partial.replace(destination)
     log.info("download_done", file=destination.name, bytes=destination.stat().st_size)
     return destination
