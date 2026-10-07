@@ -1,7 +1,7 @@
 """Load the TLC taxi zone lookup into NYC_TAXI.RAW.TAXI_ZONE_LOOKUP.
 
 Usage:
-    uv run --env-file .env python ingestion/load_zones.py
+    uv run --env-file .env python airflow/include/load_zones.py
 
 Downloads the CSV unless data/ already holds it, uploads it to the stage and
 copies it into the table. Replayable: a second run adds no row.
@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import structlog
 
-from load_month import DATA_DIR, download
 from snowflake_loader import connect, copy_into, put
+from tlc import DATA_DIR, download
 
 TABLE = "NYC_TAXI.RAW.TAXI_ZONE_LOOKUP"
 FILE_FORMAT = "NYC_TAXI.RAW.CSV_FF"

@@ -1,3 +1,7 @@
-apache-airflow-providers-snowflake>=6.0
+# Pinned: what this project adds to the Astro Runtime image, at the versions
+# the day-3 runs were proven with. Unpinned: packages the base image already
+# ships, listed because our code imports them directly.
+apache-airflow-providers-snowflake==6.18.0
+snowflake-connector-python==4.8.0
 apache-airflow-providers-common-sql
 requests>=2.32
