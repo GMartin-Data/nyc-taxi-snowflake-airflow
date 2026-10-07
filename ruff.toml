@@ -8,4 +8,5 @@ known-first-party = [
     "load_month",
     "load_zones",
     "snowflake_loader",
+    "tlc",
 ]

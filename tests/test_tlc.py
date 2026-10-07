@@ -1,10 +1,10 @@
-"""Pure logic of the monthly loader: month validation, file name and URL."""
+"""Pure logic of the TLC source: month validation, file name and URL."""
 
 from __future__ import annotations
 
 import pytest
 
-from load_month import file_name, source_url
+from tlc import file_name, source_url
 
 
 def test_file_name_follows_the_tlc_pattern() -> None:

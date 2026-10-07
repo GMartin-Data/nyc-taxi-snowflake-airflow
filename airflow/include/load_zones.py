@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import structlog
 
-from load_month import DATA_DIR, download
 from snowflake_loader import connect, copy_into, put
+from tlc import DATA_DIR, download
 
 TABLE = "NYC_TAXI.RAW.TAXI_ZONE_LOOKUP"
 FILE_FORMAT = "NYC_TAXI.RAW.CSV_FF"
