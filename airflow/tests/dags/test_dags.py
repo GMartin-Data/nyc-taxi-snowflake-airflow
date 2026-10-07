@@ -13,7 +13,9 @@ from __future__ import annotations
 import logging
 from collections.abc import Generator
 from contextlib import contextmanager
+from itertools import pairwise
 
+import pendulum
 import pytest
 from airflow.models import DagBag
 
@@ -81,3 +83,39 @@ def test_check_snowflake_connection_is_a_manual_single_task_dag(
     assert dag.task_ids == ["who_am_i"]
     # default_args are applied to every task of the DAG; retries lives there
     assert dag.default_args.get("retries") == 0, "a wrong key is not fixed by retrying"
+
+
+def test_load_yellow_tripdata_replays_the_first_quarter_of_2025_one_month_at_a_time(
+    dag_bag: DagBag,
+) -> None:
+    """The loading DAG runs monthly over January to March 2025 and catches up.
+
+    In Airflow 3, "@monthly" is a trigger timetable: the run of a month is
+    created on the first day of that month, and its logical date is that day.
+    With catchup=True and an inclusive end_date, switching the DAG on creates
+    the runs of 2025-01-01, 2025-02-01 and 2025-03-01, and nothing after.
+    max_active_runs=1 runs them one at a time, in order; retries=2 is the
+    brief's answer to transient failures (file not yet published, network).
+    """
+    dag = dag_bag.dags.get("load_yellow_tripdata")
+    assert dag is not None, "DAG load_yellow_tripdata not found"
+    assert dag.schedule == "@monthly"
+    assert dag.start_date == pendulum.datetime(2025, 1, 1, tz="UTC")
+    # end_date is the last period loaded, not an exclusive bound (note 07)
+    assert dag.end_date == pendulum.datetime(2025, 3, 1, tz="UTC")
+    assert dag.catchup is True, "the DAG must replay the past months"
+    assert dag.max_active_runs == 1, "one month at a time"
+    assert dag.default_args.get("retries") == 2
+
+
+def test_load_yellow_tripdata_chains_name_check_put_and_copy(dag_bag: DagBag) -> None:
+    """The four tasks form one chain, in the order of the guide's loading DAG."""
+    dag = dag_bag.dags.get("load_yellow_tripdata")
+    assert dag is not None, "DAG load_yellow_tripdata not found"
+    chain = ["file_name", "check_availability", "download_and_put", "copy_into"]
+    assert sorted(dag.task_ids) == sorted(chain)
+    # upstream_task_ids are the tasks a task waits for: none for the first one,
+    # exactly the previous one for each of the others
+    assert dag.get_task(chain[0]).upstream_task_ids == set()
+    for upstream, downstream in pairwise(chain):
+        assert dag.get_task(downstream).upstream_task_ids == {upstream}
