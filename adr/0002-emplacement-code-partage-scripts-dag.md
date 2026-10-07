@@ -1,6 +1,6 @@
 # ADR-0002 : Emplacement du code partagé entre les scripts d'ingestion et le DAG
 
-Status: Proposed
+Status: Accepted
 Date: 2026-10-07
 
 ## Contexte
