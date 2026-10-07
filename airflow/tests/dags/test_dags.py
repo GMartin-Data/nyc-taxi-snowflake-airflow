@@ -14,6 +14,7 @@ import logging
 from collections.abc import Generator
 from contextlib import contextmanager
 from itertools import pairwise
+from pathlib import Path
 
 import pendulum
 import pytest
@@ -238,10 +239,14 @@ def test_load_yellow_tripdata_declares_the_params_the_sql_files_expect(
 def test_load_yellow_tripdata_runs_one_sql_task_per_kit_file(dag_bag: DagBag) -> None:
     """Every kit file is one SQLExecuteQueryOperator reading that file.
 
-    The operator treats a "sql" value ending in ".sql" as a file to load from
-    template_searchpath, then renders it with Jinja. Files holding several
-    statements say so with split_statements=True: the hook then sends them one
-    by one, in a single transaction committed at the end.
+    A "sql" value ending in ".sql" names a file under template_searchpath.
+    Parsing the DAG already replaces it by the file's content (the DagBag
+    calls resolve_template_files), and a file that cannot be found is only
+    logged, the path staying in place: comparing with the content read from
+    the image proves both that the task names the right file and that the
+    search path resolves it. Files holding several statements say so with
+    split_statements=True: the hook sends them one by one, in a single
+    transaction committed at the end.
     """
     dag = dag_bag.dags.get("load_yellow_tripdata")
     assert dag is not None, "DAG load_yellow_tripdata not found"
@@ -250,7 +255,7 @@ def test_load_yellow_tripdata_runs_one_sql_task_per_kit_file(dag_bag: DagBag) ->
         task = dag.get_task(task_id)
         assert isinstance(task, SQLExecuteQueryOperator), task_id
         assert task.conn_id == CONN_ID, task_id
-        assert task.sql == sql_file, task_id
+        assert task.sql == Path(SQL_DIR, sql_file).read_text(), task_id
         # default_args apply: a transient Snowflake error is worth retrying
         assert task.retries == 2, task_id
     for task_id in MULTI_STATEMENT_TASKS:
@@ -273,7 +278,7 @@ def test_load_yellow_tripdata_checks_read_their_file_and_never_retry(
         task = dag.get_task(task_id)
         assert isinstance(task, SQLCheckOperator), task_id
         assert task.conn_id == CONN_ID, task_id
-        assert task.sql == sql_file, task_id
+        assert task.sql == Path(SQL_DIR, sql_file).read_text(), task_id
         assert task.retries == 0, f"{task_id}: a failed check is not fixed by retrying"
 
 
