@@ -59,7 +59,13 @@ def load_yellow_tripdata() -> None:
 
     @task
     def check_availability(name: str) -> str:
-        """Fail, and so retry later, if the TLC has not published the file yet."""
+        """Fail if the TLC has not published the file.
+
+        The DAG's retries cover a transient error (network, short outage),
+        not the publication lag: the TLC publishes a month about two months
+        later, far beyond two retries five minutes apart. The bounded window
+        of this DAG only covers months already published.
+        """
         url = f"{tlc.BASE_URL}/{name}"
         # HEAD fetches the headers only, no download; the TLC distribution
         # answers 403 (not 404) for a missing file, raise_for_status covers both
