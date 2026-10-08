@@ -277,8 +277,8 @@ def test_load_yellow_tripdata_runs_one_sql_task_per_kit_file(dag_bag: DagBag) ->
     logged, the path staying in place: comparing with the content read from
     the image proves both that the task names the right file and that the
     search path resolves it. Files holding several statements say so with
-    split_statements=True: the hook sends them one by one, in a single
-    transaction committed at the end.
+    split_statements=True; the Snowflake hook splits every file by default,
+    the flag only states the intent where it matters.
     """
     dag = dag_bag.dags.get("load_yellow_tripdata")
     assert dag is not None, "DAG load_yellow_tripdata not found"

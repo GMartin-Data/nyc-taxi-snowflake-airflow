@@ -71,9 +71,10 @@ def run_sql(
 ) -> SQLExecuteQueryOperator:
     """One task per SQL file, rendered with Jinja then run on the connection.
 
-    split_statements=True is set on the files holding several statements
-    (three CREATE, or a DELETE then an INSERT): the hook sends them one by
-    one, in a single transaction committed at the end.
+    The Snowflake hook splits every file on ";" by default and sends the
+    statements one by one, in a single transaction committed at the end.
+    split_statements=True only states that intent on the files where it
+    matters (three CREATE, or a DELETE then an INSERT); None changes nothing.
     """
     return SQLExecuteQueryOperator(
         task_id=task_id,
