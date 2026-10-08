@@ -98,16 +98,21 @@ ORDER BY 1, 2;
 -- Step C - January 2025 is loaded, faithfully
 -- -----------------------------------------------------------------------------
 
--- Expected: 1 row, 3475226 then TRUE in the four *_ok columns.
+-- Expected: 1 row, 3475226 then TRUE in the five *_ok columns.
 -- A file staged in a folder would not match the filter: _source_file must be
 -- the file name alone. Amounts rounded to integers would give 0 decimal rows.
 -- ZEROIFNULL: on an empty table COUNT_IF returns NULL, not 0.
+-- The timestamp bounds are wide on purpose: a Parquet TIMESTAMP read as a raw
+-- integer lands millions of years away, whereas the few stray trips that TLC
+-- files carry from earlier years are a data quality matter, not a contract one.
 SELECT
     COUNT(*) AS row_count,
     COUNT(*) = 3475226 AS row_count_ok,
     COUNT(_loaded_at) = 3475226 AS loaded_at_ok,
     ZEROIFNULL(COUNT_IF(fare_amount <> ROUND(fare_amount))) = 3069449 AS fare_decimals_ok,
-    ZEROIFNULL(COUNT_IF(total_amount <> ROUND(total_amount))) = 3312453 AS total_decimals_ok
+    ZEROIFNULL(COUNT_IF(total_amount <> ROUND(total_amount))) = 3312453 AS total_decimals_ok,
+    MIN(tpep_pickup_datetime) >= '2000-01-01'
+        AND MAX(tpep_pickup_datetime) < '2026-01-01' AS pickup_range_ok
 FROM NYC_TAXI.RAW.YELLOW_TRIPDATA
 WHERE _source_file = 'yellow_tripdata_2025-01.parquet';
 
