@@ -104,7 +104,7 @@ def check(task_id: str, sql_file: str) -> SQLCheckOperator:
     default_args={"retries": 2, "retry_delay": pendulum.duration(minutes=5)},
     template_searchpath=SQL_DIR,
     params=PARAMS,
-    tags=["nyc_taxi", "load"],
+    tags=["nyc_taxi", "load", "transform"],
 )
 def load_yellow_tripdata() -> None:
     """Declare the tasks and chain them; the function body is the DAG."""
