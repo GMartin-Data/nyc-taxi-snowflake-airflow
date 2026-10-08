@@ -15,9 +15,14 @@ USE ROLE TRANSFORMER;
 -- 1. File formats - how to read each kind of file
 -- -----------------------------------------------------------------------------
 
--- A Parquet file carries its own column names and types: nothing to declare.
+-- A Parquet file carries its own column names and types: nothing to declare,
+-- except that Snowflake honours the logical types only when asked. Without
+-- USE_LOGICAL_TYPE, a TIMESTAMP(MICROS) column is read as its storage type, an
+-- integer of microseconds, which COPY INTO then casts as if it were seconds.
+-- An existing format is not altered by this script: 06 fixes it in place.
 CREATE FILE FORMAT IF NOT EXISTS NYC_TAXI.RAW.PARQUET_FF
     TYPE = PARQUET
+    USE_LOGICAL_TYPE = TRUE
     COMMENT = 'Monthly TLC trip files';
 
 -- A CSV file describes nothing by itself: header, quotes and column count.
