@@ -10,6 +10,7 @@ Une ligne par zone de prise en charge et heure de la journée, sur les trois moi
 
 ```sql
 SELECT
+    f.pickup_zone_key,
     z.zone_name                                     AS pickup_zone,
     z.borough,
     f.pickup_hour,
@@ -22,29 +23,29 @@ SELECT
 FROM NYC_TAXI.MARTS.FCT_TRIPS f
 LEFT JOIN NYC_TAXI.MARTS.DIM_ZONE z         ON z.zone_key = f.pickup_zone_key
 LEFT JOIN NYC_TAXI.MARTS.DIM_PAYMENT_TYPE p ON p.payment_type_key = f.payment_type_key
-GROUP BY 1, 2, 3
+GROUP BY 1, 2, 3, 4
 ORDER BY nb_trips DESC
 LIMIT 10;
 ```
 
-Contrôle : sans `LIMIT`, la somme de `nb_trips` sur les 5 911 lignes vaut 10 382 378, le nombre de trajets de `FCT_TRIPS`. Le top 10 coïncide avec `MART_ZONE_HOURLY_DEMAND` agrégée sur `is_weekend`.
+Contrôle : sans `LIMIT`, la somme de `nb_trips` sur les 5 935 lignes vaut 10 382 378, le nombre de trajets de `FCT_TRIPS`. Le top 10 coïncide avec `MART_ZONE_HOURLY_DEMAND` agrégée sur `is_weekend`. La clé de zone fait partie du grain : deux zones de même nom dans le même arrondissement (Corona, clés 56 et 57 ; Governor's Island/Ellis Island/Liberty Island, clés 103 à 105) restent des lignes distinctes.
 
 ## Le résultat : les 10 premières lignes
 
 Exécutée le 2026-10-08 sur les fichiers de janvier à mars 2025. Montants en dollars.
 
-| Zone | Arrondissement | Heure | Trajets | Trajets par jour | Recette moyenne | Par carte | En espèces | Part carte |
-|---|---|---|---|---|---|---|---|---|
-| Midtown Center | Manhattan | 18 h | 45 978 | 511 | 24,40 | 25,06 | 19,93 | 83,2 % |
-| Midtown Center | Manhattan | 17 h | 45 063 | 501 | 28,57 | 26,35 | 20,74 | 84,4 % |
-| Midtown Center | Manhattan | 19 h | 38 770 | 431 | 23,62 | 24,25 | 19,36 | 81,7 % |
-| Midtown Center | Manhattan | 20 h | 38 518 | 428 | 22,67 | 23,61 | 18,61 | 72,3 % |
-| Midtown Center | Manhattan | 16 h | 36 702 | 408 | 25,77 | 26,53 | 21,27 | 83,6 % |
-| Upper East Side North | Manhattan | 15 h | 36 598 | 407 | 20,37 | 20,64 | 17,12 | 81,3 % |
-| Upper East Side South | Manhattan | 14 h | 36 482 | 405 | 19,98 | 20,41 | 16,85 | 81,8 % |
-| Upper East Side South | Manhattan | 15 h | 36 399 | 404 | 19,98 | 20,34 | 16,94 | 82,4 % |
-| Times Sq/Theatre District | Manhattan | 21 h | 36 340 | 404 | 23,58 | 24,50 | 18,94 | 71,2 % |
-| Upper East Side South | Manhattan | 18 h | 36 093 | 401 | 21,23 | 21,54 | 17,97 | 81,9 % |
+| Clé | Zone | Arrondissement | Heure | Trajets | Trajets par jour | Recette moyenne | Par carte | En espèces | Part carte |
+|---|---|---|---|---|---|---|---|---|---|
+| 161 | Midtown Center | Manhattan | 18 h | 45 978 | 511 | 24,40 | 25,06 | 19,93 | 83,2 % |
+| 161 | Midtown Center | Manhattan | 17 h | 45 063 | 501 | 28,57 | 26,35 | 20,74 | 84,4 % |
+| 161 | Midtown Center | Manhattan | 19 h | 38 770 | 431 | 23,62 | 24,25 | 19,36 | 81,7 % |
+| 161 | Midtown Center | Manhattan | 20 h | 38 518 | 428 | 22,67 | 23,61 | 18,61 | 72,3 % |
+| 161 | Midtown Center | Manhattan | 16 h | 36 702 | 408 | 25,77 | 26,53 | 21,27 | 83,6 % |
+| 236 | Upper East Side North | Manhattan | 15 h | 36 598 | 407 | 20,37 | 20,64 | 17,12 | 81,3 % |
+| 237 | Upper East Side South | Manhattan | 14 h | 36 482 | 405 | 19,98 | 20,41 | 16,85 | 81,8 % |
+| 237 | Upper East Side South | Manhattan | 15 h | 36 399 | 404 | 19,98 | 20,34 | 16,94 | 82,4 % |
+| 230 | Times Sq/Theatre District | Manhattan | 21 h | 36 340 | 404 | 23,58 | 24,50 | 18,94 | 71,2 % |
+| 237 | Upper East Side South | Manhattan | 18 h | 36 093 | 401 | 21,23 | 21,54 | 17,97 | 81,9 % |
 
 ## Ce qu'il faut en retenir
 
