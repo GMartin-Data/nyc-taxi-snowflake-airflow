@@ -1,6 +1,6 @@
 # ADR-0003 : Masquer l'identifiant du compte Snowflake sur les captures publiées
 
-Status: Proposed
+Status: Accepted
 Date: 2026-10-08
 
 ## Contexte
