@@ -23,6 +23,7 @@ from airflow.providers.common.sql.operators.sql import (
     SQLCheckOperator,
     SQLExecuteQueryOperator,
 )
+from airflow.sdk.exceptions import ParamValidationError
 
 # Where the SQL files live inside the container, the only place Jinja looks
 # for a templated "x.sql" besides the dags/ folder
@@ -234,6 +235,37 @@ def test_load_yellow_tripdata_declares_the_params_the_sql_files_expect(
     # run stops; the first quarter of 2025 loses about 7 % (rejected plus
     # duplicates), so 10 % leaves room without hiding a broken file
     assert dag.params["max_pct_rejected"] == 10
+
+
+# One value per param that Jinja would paste into the SQL as is
+HOSTILE_PARAMS = {
+    "max_trip_distance_miles": "100 OR TRUE",
+    "max_trip_duration_min": "180 OR TRUE",
+    "start_month": "2025-01-01' OR '1'='1",
+    "end_month": "2025-04-01'; DROP TABLE NYC_TAXI.MARTS.FCT_TRIPS; --",
+    "max_pct_rejected": "10 OR TRUE",
+}
+
+
+@pytest.mark.parametrize(
+    ("name", "hostile"), HOSTILE_PARAMS.items(), ids=HOSTILE_PARAMS
+)
+def test_load_yellow_tripdata_refuses_a_param_value_that_would_alter_the_sql(
+    dag_bag: DagBag, name: str, hostile: str
+) -> None:
+    """Each param carries a JSON schema that a trigger-time value must satisfy.
+
+    The SQL files paste "{{ params.x }}" straight into the statement, and the
+    Trigger and Backfill dialogs let whoever runs the DAG override a param. A
+    plain value in the DAG's params becomes a Param without schema, which
+    accepts any string: "10 OR TRUE" would void a check. A typed Param is
+    validated when the run is requested (resolve() runs the schema), before
+    any task exists: the run is refused, not the data.
+    """
+    dag = dag_bag.dags.get("load_yellow_tripdata")
+    assert dag is not None, "DAG load_yellow_tripdata not found"
+    with pytest.raises(ParamValidationError):
+        dag.params.get_param(name).resolve(hostile)
 
 
 def test_load_yellow_tripdata_runs_one_sql_task_per_kit_file(dag_bag: DagBag) -> None:

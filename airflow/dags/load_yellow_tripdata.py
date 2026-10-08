@@ -27,7 +27,7 @@ from airflow.providers.common.sql.operators.sql import (
     SQLExecuteQueryOperator,
 )
 from airflow.providers.snowflake.hooks.snowflake import SnowflakeHook
-from airflow.sdk import TaskGroup, dag, get_current_context, task
+from airflow.sdk import Param, TaskGroup, dag, get_current_context, task
 
 from include import snowflake_loader, tlc
 
@@ -45,15 +45,21 @@ END_DATE = pendulum.datetime(2025, 3, 1, tz="UTC")  # last month loaded, inclusi
 
 # Values the SQL files read through {{ params.x }}; the thresholds come from
 # the kit's README. The calendar bounds follow the DAG's own dates so that
-# DIM_DATE and the schedule cannot drift apart (end_month is exclusive)
+# DIM_DATE and the schedule cannot drift apart (end_month is exclusive).
+# Jinja pastes each value into the SQL as is, and the Trigger and Backfill
+# dialogs let whoever runs the DAG override it: the schema of each Param is
+# checked when the run is requested, so a value that is not a number or a
+# date never reaches a statement
 PARAMS = {
-    "max_trip_distance_miles": 100,
-    "max_trip_duration_min": 180,
-    "start_month": START_DATE.to_date_string(),
-    "end_month": END_DATE.add(months=1).to_date_string(),
+    "max_trip_distance_miles": Param(100, type="integer", minimum=1),
+    "max_trip_duration_min": Param(180, type="integer", minimum=1),
+    "start_month": Param(START_DATE.to_date_string(), type="string", format="date"),
+    "end_month": Param(
+        END_DATE.add(months=1).to_date_string(), type="string", format="date"
+    ),
     # Share of a month's trips int_trips__flagged may reject before the run
     # stops; the first quarter of 2025 loses about 7 %, so 10 % leaves room
-    "max_pct_rejected": 10,
+    "max_pct_rejected": Param(10, type="integer", minimum=0, maximum=100),
 }
 
 # Same logger as include/: Airflow 3 writes the task log with structlog
